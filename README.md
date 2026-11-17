@@ -1,3 +1,10 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset=".github/banner-dark.svg">
+    <img alt="redis_clone — built from zero" src=".github/banner-light.svg" width="100%">
+  </picture>
+</p>
+
 # redis_clone
 
 A bounded, RESP2-protocol key-value store in Go. **One implementation**, one truth: an in-memory `internal/store.Store` shared by the TCP server and exercised by the test suite. It is explicitly **not** a full Redis clone and makes no compatibility claim beyond the subset below.
