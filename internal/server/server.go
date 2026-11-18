@@ -9,8 +9,8 @@ import (
 	"net"
 	"time"
 
-	"github.com/Sifr-Dev/redis_clone/internal/resp"
-	"github.com/Sifr-Dev/redis_clone/internal/store"
+	"github.com/Sifr-Dev/redwire/internal/resp"
+	"github.com/Sifr-Dev/redwire/internal/store"
 )
 
 const readDeadline = 30 * time.Second

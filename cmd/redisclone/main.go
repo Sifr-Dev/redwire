@@ -12,8 +12,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/Sifr-Dev/redis_clone/internal/server"
-	"github.com/Sifr-Dev/redis_clone/internal/store"
+	"github.com/Sifr-Dev/redwire/internal/server"
+	"github.com/Sifr-Dev/redwire/internal/store"
 )
 
 const defaultAddr = "127.0.0.1:6379"
