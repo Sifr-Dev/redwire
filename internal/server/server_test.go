@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sifr-salahy/redis_clone/internal/store"
+	"github.com/Sifr-dev/redis_clone/internal/store"
 )
 
 func dial(t *testing.T, ln net.Listener) net.Conn {

@@ -1,3 +1,3 @@
-module github.com/sifr-salahy/redis_clone
+module github.com/Sifr-dev/redis_clone
 
 go 1.26.3
