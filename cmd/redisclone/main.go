@@ -12,8 +12,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/mohamedsalahi/redis_clone/internal/server"
-	"github.com/mohamedsalahi/redis_clone/internal/store"
+	"github.com/sifr-salahy/redis_clone/internal/server"
+	"github.com/sifr-salahy/redis_clone/internal/store"
 )
 
 const defaultAddr = "127.0.0.1:6379"

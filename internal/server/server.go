@@ -9,8 +9,8 @@ import (
 	"net"
 	"time"
 
-	"github.com/mohamedsalahi/redis_clone/internal/resp"
-	"github.com/mohamedsalahi/redis_clone/internal/store"
+	"github.com/sifr-salahy/redis_clone/internal/resp"
+	"github.com/sifr-salahy/redis_clone/internal/store"
 )
 
 const readDeadline = 30 * time.Second
