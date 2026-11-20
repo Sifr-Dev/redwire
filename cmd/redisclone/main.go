@@ -1,16 +1,20 @@
 // redisclone is the single binary for the Cipher Redis project:
-//   redisclone server [-addr 127.0.0.1:6379]   serve RESP2 on TCP
-//   redisclone cli [-addr addr] [COMMAND arg...]  one-shot or REPL client
+//
+//	redisclone server [-addr 127.0.0.1:6379]   serve RESP2 on TCP
+//	redisclone cli [-addr addr] [COMMAND arg...]  one-shot or REPL client
 package main
 
 import (
 	"bufio"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
 	"net"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 
 	"github.com/Sifr-Dev/redwire/internal/server"
 	"github.com/Sifr-Dev/redwire/internal/store"
@@ -45,13 +49,50 @@ func usage() {
 func runServer(args []string) {
 	fs := flag.NewFlagSet("server", flag.ExitOnError)
 	addr := fs.String("addr", defaultAddr, "listen address")
+	snapshot := fs.String("snapshot", "", "atomic snapshot path (empty disables persistence)")
+	maxKeys := fs.Int("max-keys", store.DefaultMaxKeys, "maximum live keys (must be positive)")
+	maxMemory := fs.Int64("max-memory-bytes", store.DefaultMaxMemoryBytes, "maximum live key+value bytes (must be positive)")
+	maxConnections := fs.Int("max-connections", server.DefaultMaxConnections, "maximum active TCP connections (must be positive)")
 	_ = fs.Parse(args)
-	srv := server.New(store.NewStore())
-	fmt.Printf("redisclone: listening on %s\n", *addr)
-	if err := srv.ListenAndServe(*addr); err != nil {
+	if *maxKeys <= 0 || *maxMemory <= 0 || *maxConnections <= 0 {
+		fmt.Fprintln(os.Stderr, "server: max keys, memory bytes, and connections must be positive")
+		os.Exit(2)
+	}
+	st, err := store.Open(*snapshot, store.Limits{MaxKeys: *maxKeys, MaxMemoryBytes: *maxMemory})
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "server: recover snapshot: %v\n", err)
+		os.Exit(1)
+	}
+	// Refuse to listen when a persistent store starts without a usable snapshot;
+	// otherwise a transient configuration error could silently lose durability.
+	srv := server.NewWithConfig(st, server.Config{MaxConnections: *maxConnections})
+	ln, err := net.Listen("tcp", *addr)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "server: listen: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Printf("redisclone: listening on %s (snapshot=%q)\n", ln.Addr(), *snapshot)
+
+	signals := make(chan os.Signal, 1)
+	signal.Notify(signals, os.Interrupt, syscall.SIGTERM)
+	done := make(chan struct{})
+	go func() {
+		select {
+		case sig := <-signals:
+			fmt.Fprintf(os.Stderr, "server: received %s; shutting down\n", sig)
+		case <-done:
+		}
+		_ = srv.Close()
+	}()
+	err = srv.Serve(ln)
+	signal.Stop(signals)
+	close(done)
+	_ = srv.Close()
+	if err != nil && !errors.Is(err, server.ErrServerClosed) {
 		fmt.Fprintf(os.Stderr, "server: %v\n", err)
 		os.Exit(1)
 	}
+	fmt.Fprintln(os.Stderr, "server: shutdown complete")
 }
 
 func runCli(args []string) {
@@ -77,7 +118,7 @@ func runCli(args []string) {
 
 	// Interactive REPL: same wire protocol, line-oriented UX.
 	fmt.Printf("redisclone cli - connected to %s\n", *addr)
-	fmt.Printf("commands: PING, SET <key> <value>, GET <key>, DEL <key>, EXISTS <key>, QUIT\n\n")
+	fmt.Printf("commands: PING, SET <key> <value>, GET <key>, DEL <key>, EXISTS <key>, PEXPIRE <key> <ms>, TTL <key>, PTTL <key>, QUIT\n\n")
 	scanner := bufio.NewScanner(os.Stdin)
 	for {
 		fmt.Print("redisclone> ")
