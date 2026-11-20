@@ -1,5 +1,4 @@
-// Package resp implements the RESP2 wire protocol for a deliberately bounded
-// command subset. See README.md for exact semantics and limits.
+// Package resp implements a deliberately bounded RESP2 command subset.
 package resp
 
 import (
@@ -16,8 +15,11 @@ const (
 	MaxArrayElements = 1024
 	// MaxBulkLength bounds a single bulk string (1 MiB).
 	MaxBulkLength = 1 << 20
-	// maxHeaderLine bounds any RESP header line (e.g. "$1234567\r\n").
-	maxHeaderLine = 512
+	// MaxCommandBytes bounds headers and bodies for one complete command. This
+	// prevents MaxArrayElements individually valid bulks allocating ~1 GiB.
+	MaxCommandBytes = 2 << 20
+	// MaxHeaderLine bounds any RESP header line, including its CRLF.
+	MaxHeaderLine = 512
 )
 
 // Command is a parsed RESP2 command: an array of bulk strings.
@@ -33,22 +35,25 @@ func (c Command) Name() string {
 	return string(bytes.ToUpper(c.Parts[0]))
 }
 
-// ReadCommand reads exactly one RESP2 command from r. It rejects arrays that
-// exceed MaxArrayElements, bulk strings that exceed MaxBulkLength, malformed
-// headers, and non-CRLF line endings.
+// ReadCommand reads exactly one RESP2 command from r. Its allocations and wire
+// consumption are bounded by MaxCommandBytes in addition to per-field limits.
 func ReadCommand(r *bufio.Reader) (Command, error) {
 	header, err := readHeaderLine(r)
 	if err != nil {
 		return Command{}, err
 	}
+	budget := MaxCommandBytes - len(header) - 2
+	if budget < 0 {
+		return Command{}, errors.New("resp: command exceeds byte bound")
+	}
 	if len(header) == 0 || header[0] != '*' {
 		return Command{}, errors.New("resp: expected array header")
 	}
-	arity, err := strconv.Atoi(string(header[1:]))
+	arity, err := parseLength(header[1:])
 	if err != nil {
-		return Command{}, fmt.Errorf("resp: invalid arity %q", header[1:])
+		return Command{}, fmt.Errorf("resp: invalid arity: %w", err)
 	}
-	if arity < 0 || arity > MaxArrayElements {
+	if arity > MaxArrayElements {
 		return Command{}, fmt.Errorf("resp: arity %d exceeds bound %d", arity, MaxArrayElements)
 	}
 
@@ -58,15 +63,20 @@ func ReadCommand(r *bufio.Reader) (Command, error) {
 		if err != nil {
 			return Command{}, err
 		}
+		budget -= len(lh) + 2
 		if len(lh) == 0 || lh[0] != '$' {
 			return Command{}, errors.New("resp: expected bulk string header")
 		}
-		bulkLen, err := strconv.Atoi(string(lh[1:]))
+		bulkLen, err := parseLength(lh[1:])
 		if err != nil {
-			return Command{}, fmt.Errorf("resp: invalid bulk length %q", lh[1:])
+			return Command{}, fmt.Errorf("resp: invalid bulk length: %w", err)
 		}
-		if bulkLen < 0 || bulkLen > MaxBulkLength {
+		if bulkLen > MaxBulkLength {
 			return Command{}, fmt.Errorf("resp: bulk length %d exceeds bound %d", bulkLen, MaxBulkLength)
+		}
+		budget -= bulkLen + 2
+		if budget < 0 {
+			return Command{}, fmt.Errorf("resp: command exceeds byte bound %d", MaxCommandBytes)
 		}
 		buf := make([]byte, bulkLen+2)
 		if _, err := io.ReadFull(r, buf); err != nil {
@@ -80,7 +90,24 @@ func ReadCommand(r *bufio.Reader) (Command, error) {
 	return Command{Parts: parts}, nil
 }
 
-// readHeaderLine reads one CRLF-terminated header line bounded by maxHeaderLine.
+func parseLength(b []byte) (int, error) {
+	if len(b) == 0 {
+		return 0, errors.New("empty length")
+	}
+	for _, c := range b {
+		if c < '0' || c > '9' {
+			return 0, errors.New("length must be a non-negative decimal integer")
+		}
+	}
+	n, err := strconv.ParseUint(string(b), 10, 32)
+	if err != nil {
+		return 0, errors.New("length overflows supported bound")
+	}
+	return int(n), nil
+}
+
+// readHeaderLine uses a fixed buffer; Reader.ReadString/ReadBytes would let an
+// unterminated peer line grow without limit even with a later length check.
 func readHeaderLine(r *bufio.Reader) ([]byte, error) {
 	line, err := r.ReadSlice('\n')
 	if err == bufio.ErrBufferFull {
@@ -89,7 +116,7 @@ func readHeaderLine(r *bufio.Reader) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	if len(line) > maxHeaderLine {
+	if len(line) > MaxHeaderLine {
 		return nil, errors.New("resp: header line too long")
 	}
 	if len(line) < 2 || line[len(line)-2] != '\r' {
@@ -128,6 +155,6 @@ func WriteBulk(w io.Writer, b []byte) error {
 
 // WriteInt writes an integer reply, e.g. ":1\r\n".
 func WriteInt(w io.Writer, n int64) error {
-	_, err := io.WriteString(w, fmt.Sprintf(":%d\r\n", n))
+	_, err := fmt.Fprintf(w, ":%d\r\n", n)
 	return err
 }
