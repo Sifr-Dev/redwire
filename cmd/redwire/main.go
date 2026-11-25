@@ -1,7 +1,7 @@
-// redisclone is the single binary for the Cipher Redis project:
+// redwire is the single binary for the Cipher Redis project:
 //
-//	redisclone server [-addr 127.0.0.1:6379]   serve RESP2 on TCP
-//	redisclone cli [-addr addr] [COMMAND arg...]  one-shot or REPL client
+//	redwire server [-addr 127.0.0.1:6379]   serve RESP2 on TCP
+//	redwire cli [-addr addr] [COMMAND arg...]  one-shot or REPL client
 package main
 
 import (
@@ -41,8 +41,8 @@ func main() {
 
 func usage() {
 	fmt.Fprintf(os.Stderr, `usage:
-  redisclone server [-addr 127.0.0.1:6379]
-  redisclone cli [-addr 127.0.0.1:6379] [COMMAND arg...]
+  redwire server [-addr 127.0.0.1:6379]
+  redwire cli [-addr 127.0.0.1:6379] [COMMAND arg...]
 `)
 }
 
@@ -71,7 +71,7 @@ func runServer(args []string) {
 		fmt.Fprintf(os.Stderr, "server: listen: %v\n", err)
 		os.Exit(1)
 	}
-	fmt.Printf("redisclone: listening on %s (snapshot=%q)\n", ln.Addr(), *snapshot)
+	fmt.Printf("redwire: listening on %s (snapshot=%q)\n", ln.Addr(), *snapshot)
 
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, os.Interrupt, syscall.SIGTERM)
@@ -117,11 +117,11 @@ func runCli(args []string) {
 	}
 
 	// Interactive REPL: same wire protocol, line-oriented UX.
-	fmt.Printf("redisclone cli - connected to %s\n", *addr)
+	fmt.Printf("redwire cli - connected to %s\n", *addr)
 	fmt.Printf("commands: PING, SET <key> <value>, GET <key>, DEL <key>, EXISTS <key>, PEXPIRE <key> <ms>, TTL <key>, PTTL <key>, QUIT\n\n")
 	scanner := bufio.NewScanner(os.Stdin)
 	for {
-		fmt.Print("redisclone> ")
+		fmt.Print("redwire> ")
 		if !scanner.Scan() {
 			fmt.Println()
 			return

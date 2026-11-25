@@ -56,7 +56,7 @@ bound slow readers, and mutation checks bound stored data.
 ## Run
 
 ```bash
-go build -o redwire ./cmd/redisclone
+go build -o redwire ./cmd/redwire
 ./redwire server -addr 127.0.0.1:6379 -snapshot ./redwire.json \
   -max-keys 10000 -max-memory-bytes 67108864 -max-connections 128
 
