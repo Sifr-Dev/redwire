@@ -1,1 +1,5 @@
 *.exe
+/packaging/arch/pkg/
+/packaging/arch/src/
+/packaging/arch/*.tar.gz
+/packaging/arch/*.pkg.tar.zst

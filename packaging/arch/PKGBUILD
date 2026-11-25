@@ -1,0 +1,27 @@
+pkgname=redwire
+pkgver=0.1.1
+pkgrel=1
+pkgdesc='Bounded RESP2 key-value server and CLI'
+arch=('x86_64' 'aarch64')
+url='https://github.com/Sifr-Dev/redwire'
+license=('MIT')
+makedepends=('go')
+source=("$pkgname-$pkgver.tar.gz::https://github.com/Sifr-Dev/redwire/archive/refs/tags/v$pkgver.tar.gz")
+sha256sums=('fa55158381514f363b3271c217371323046a2a66df55ed8fd22ac371625ad83b')
+
+build() {
+  cd "$pkgname-$pkgver"
+  export CGO_ENABLED=1
+  go build -trimpath -o redwire ./cmd/redwire
+}
+
+check() {
+  cd "$pkgname-$pkgver"
+  go test ./...
+}
+
+package() {
+  cd "$pkgname-$pkgver"
+  install -Dm755 redwire "$pkgdir/usr/bin/redwire"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}

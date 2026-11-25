@@ -1,0 +1,13 @@
+pkgbase = redwire
+	pkgdesc = Bounded RESP2 key-value server and CLI
+	pkgver = 0.1.1
+	pkgrel = 1
+	url = https://github.com/Sifr-Dev/redwire
+	arch = x86_64
+	arch = aarch64
+	license = MIT
+	makedepends = go
+	source = redwire-0.1.1.tar.gz::https://github.com/Sifr-Dev/redwire/archive/refs/tags/v0.1.1.tar.gz
+	sha256sums = fa55158381514f363b3271c217371323046a2a66df55ed8fd22ac371625ad83b
+
+pkgname = redwire
