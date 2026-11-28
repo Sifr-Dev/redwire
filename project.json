@@ -1,0 +1,9 @@
+{
+  "name": "redwire",
+  "description": "Durability and atomic-snapshot design",
+  "stack": [
+    "go"
+  ],
+  "status": "experimental",
+  "primary_language": "Go"
+}
