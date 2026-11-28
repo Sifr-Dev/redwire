@@ -16,18 +16,17 @@
 
 </div>
 
-> redwire (formerly `redwire`) commits every mutation by writing and `fsync`ing
+> redwire commits every mutation by writing and `fsync`ing
 > a complete snapshot, renaming it, and `fsync`ing the directory — then answers.
 
 ## What it is
 
-redwire is a deliberately narrow RESP2 server: ten commands, one shared store,
+This is a deliberately narrow RESP2 server: ten commands, one shared store,
 explicit limits, and a durability design that is easy to state and test. It is
 **not Redis**, is not production-hardened, and claims compatibility only with the
 commands and framing documented below.
 
-The module, binary and package keep their original name, `redwire`; the product
-name is redwire and the repository is still `Sifr-Dev/redwire`.
+The module, binary and package are all named `redwire`.
 
 ## Current capabilities
 
@@ -182,7 +181,6 @@ round trip at a time, Python); it is not a server throughput ceiling.
 - AUTH/TLS/ACL and safe single-writer file locking.
 - Regenerating the Arch package from the current tree.
 - A load benchmark with concurrency and dataset-size sweeps.
-- Binary rename to `monolith` while keeping `redwire` working.
 
 ## License
 
