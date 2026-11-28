@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="assets/banner.svg" alt="Monolith — bounded RESP2 key-value server" width="100%">
+<img src="assets/banner.svg" alt="redwire — bounded RESP2 key-value server" width="100%">
 
-# Monolith
+# redwire
 
 **A small, bounded RESP2 key-value server with synchronous atomic snapshots.**
 
@@ -16,18 +16,18 @@
 
 </div>
 
-> Monolith (formerly `redwire`) commits every mutation by writing and `fsync`ing
+> redwire (formerly `redwire`) commits every mutation by writing and `fsync`ing
 > a complete snapshot, renaming it, and `fsync`ing the directory — then answers.
 
 ## What it is
 
-Monolith is a deliberately narrow RESP2 server: ten commands, one shared store,
+redwire is a deliberately narrow RESP2 server: ten commands, one shared store,
 explicit limits, and a durability design that is easy to state and test. It is
 **not Redis**, is not production-hardened, and claims compatibility only with the
 commands and framing documented below.
 
 The module, binary and package keep their original name, `redwire`; the product
-name is Monolith and the repository is still `Sifr-Dev/redwire`.
+name is redwire and the repository is still `Sifr-Dev/redwire`.
 
 ## Current capabilities
 
