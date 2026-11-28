@@ -1,9 +1,13 @@
 {
-  "name": "redwire",
-  "description": "Durability and atomic-snapshot design",
+  "name": "Monolith",
+  "displayName": "Monolith",
+  "repo": "redwire",
+  "description": "Bounded RESP2 key-value server with synchronous atomic snapshot durability",
+  "summary": "A small Go server with explicit key, memory and connection limits, CRC-checked snapshots and injected-failure recovery tests.",
   "stack": [
     "go"
   ],
-  "status": "experimental",
-  "primary_language": "Go"
+  "status": "active",
+  "primary_language": "Go",
+  "license": "MIT"
 }
